@@ -24,7 +24,7 @@ const isValid = form => {
         } 
 }
 
-router.get('/my', VerifyToken, (req, res, next) => 
+router.get('/my', VerifyToken, (req, res) => 
     Form.find(
         {createdBy: req.userId})
         .populate('questions')
@@ -40,7 +40,7 @@ router.get('/my', VerifyToken, (req, res, next) =>
 router.get('/byurl/:url', (req, res, next) => 
     Form.findOne(
         {url: req.params.url})
-        .populate('createdBy', '-password -__v')
+        .populate('createdBy', '-password -email -__v')
         .populate('questions')
         .populate('candidates')
         .exec((err, form) => {
