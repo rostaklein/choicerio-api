@@ -13,21 +13,27 @@ var VerifyToken = require('./VerifyToken');
 var fetch = require('node-fetch');
 
 router.post('/register', (req, res) => {
-    var hashedPassword = bcrypt.hashSync(req.body.password, 8);
+    User.findOne({email: req.body.email}, (err, userFound) => {
+      if(userFound){
+        return res.status(500).send({msg: "User with this email already exists"});
+      }else{
+        var hashedPassword = bcrypt.hashSync(req.body.password, 8);
+        User.create({
+          name : req.body.name,
+          email : req.body.email,
+          password : hashedPassword
+        },
+        (err, user) => {
+          if (err) return res.status(500).send(err);
+          // create a token
+          var token = jwt.sign({ id: user._id }, config.secret, {
+            expiresIn: 86400 // expires in 24 hours
+          });
+          return res.status(200).send({ auth: true, token: token });
+        }); 
+      }
+    })
     
-    User.create({
-      name : req.body.name,
-      email : req.body.email,
-      password : hashedPassword
-    },
-    (err, user) => {
-      if (err) return res.status(500).send(err);
-      // create a token
-      var token = jwt.sign({ id: user._id }, config.secret, {
-        expiresIn: 86400 // expires in 24 hours
-      });
-      return res.status(200).send({ auth: true, token: token });
-    }); 
 });
 
 router.get('/me', VerifyToken, (req, res, next) => 
