@@ -20,6 +20,8 @@ var FormController = require('./form/FormController');
 app.use('/form', FormController);
 var AuthController = require('./auth/AuthController');
 app.use('/auth', AuthController);
+var SubmissionController = require('./form/SubmissionController');
+app.use('/submission', SubmissionController);
 
 app.get('/', (req, res) => {
     res.status(200).send({
