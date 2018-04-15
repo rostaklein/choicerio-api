@@ -2,12 +2,14 @@ var express = require('express');
 var router = express.Router();
 var bodyParser = require('body-parser');
 var VerifyToken = require('../auth/VerifyToken');
+var mongoose = require("mongoose");
 
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 var Form = require('./Form');
 var Question = require('./Question');
 var Candidate = require('./Candidate');
+var Submission = require('./Submission');
 
 const isValid = form => {
         if(
@@ -46,7 +48,24 @@ router.get('/byurl/:url', (req, res, next) =>
         .exec((err, form) => {
             if(err) return res.status(500).send(err);
             if(!form) return res.status(404).send({msg: "No form found for "+req.params.url});
-            return res.status(200).send(form);
+            const candidateIDs=form.candidates.map(candidate =>
+                mongoose.Types.ObjectId(candidate._id)
+            );
+            Submission.find({
+                candidate: { $in: candidateIDs }
+            }, (err, resp)=>{
+                const candidateSubmissions = resp.reduce((acc, curr) => {
+                    acc[curr.candidate]=curr.answers.reduce((acc, answer)=>{
+                        acc[answer.question]=answer.vote;
+                        return acc;
+                    }, {});
+                    return acc;
+                }, {})
+                return res.status(200).send({...form._doc, candidateSubmissions});
+            }
+            );
+            
+            
         }
     )
 );
